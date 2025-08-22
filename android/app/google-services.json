@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "423580756418",
+    "project_id": "bulk-basket",
+    "storage_bucket": "bulk-basket.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:423580756418:android:37bf54ecb566b1099f0e5b",
+        "android_client_info": {
+          "package_name": "com.example.bulk_basket"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-j1yVNNwHvd9l2vmCNbKqhEovDHQOiIE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

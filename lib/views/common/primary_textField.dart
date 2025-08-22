@@ -1,0 +1,34 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+class PrimaryTextfield extends StatefulWidget {
+  final String hintText;
+  final TextEditingController? inputValue;
+  const PrimaryTextfield({
+    super.key,
+    required this.hintText,
+    this.inputValue
+  });
+
+  @override
+  State<PrimaryTextfield> createState() => _PrimaryTextfieldState();
+}
+
+class _PrimaryTextfieldState extends State<PrimaryTextfield> {
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: widget.inputValue,
+      decoration: InputDecoration(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(
+              10.r,
+            ),
+          ),
+          hintText: widget.hintText,
+          hintStyle: TextStyle(
+            color: Colors.grey,
+          )),
+    );
+  }
+}
