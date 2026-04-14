@@ -15,20 +15,27 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+
+import 'controller/location_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Get.put(LocationController()); // ✅ Make it global
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   // runApp(DevicePreview(enabled: true, builder: (context) => MyApp()));
-  runApp( MyApp());
-  // runApp(
-  //   DevicePreview(
-  //     enabled: true, //false
-  //     builder: (context) => const MyApp(),
-  //   ),
-  // );
+  // runApp( MyApp());
+    await GetStorage.init(); // must be initialized before runApp
+
+  runApp(
+    DevicePreview(
+      enabled: true, //false
+      builder: (context) => const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -43,9 +50,9 @@ class MyApp extends StatelessWidget {
         return BlocProvider(
           create: (_) => QuantityBloc(),
           child: MaterialApp(
-            // useInheritedMediaQuery: true, //start
-            // locale: DevicePreview.locale(context),
-            // builder: DevicePreview.appBuilder, // end
+            useInheritedMediaQuery: true, //start
+            locale: DevicePreview.locale(context),
+            builder: DevicePreview.appBuilder, // end
             debugShowCheckedModeBanner: false,
             // home: Temp2(),
             // home: (FirebaseAuth.instance.currentUser != null)
@@ -54,6 +61,7 @@ class MyApp extends StatelessWidget {
             //       )
             //     : RegisterScreen(),
             home: SplashScreen(),
+            // home: NewYearMegaCelebrationScreen(),
           ),
         );
       },

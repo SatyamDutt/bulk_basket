@@ -172,15 +172,17 @@
 // }
 
 import 'package:bulk_basket/views/cart/cart_order_confirmation_screen.dart';
+import 'package:bulk_basket/views/common/primary_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get_storage/get_storage.dart';
+import '../home/new_cart_order_address_screen.dart';
 
 class CartScreen extends StatefulWidget {
   final String userId;
-  const CartScreen({super.key,
-  required this.userId
-  });
+  const CartScreen({super.key, required this.userId});
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -195,9 +197,14 @@ class _CartScreenState extends State<CartScreen> {
     fetchProducts();
   }
 
+  final currentUserId = GetStorage().read('userId');
+
   void fetchProducts() async {
-    QuerySnapshot snapshot =
-        await FirebaseFirestore.instance.collection('Cart').doc(widget.userId).collection('Cart-Items').get();
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('Cart')
+        .doc(currentUserId)
+        .collection('Cart-Items')
+        .get();
 
     setState(() {
       ItemList = snapshot.docs;
@@ -209,7 +216,12 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void DeleteProduct(String productId) async {
-    await FirebaseFirestore.instance.collection('Cart').doc(widget.userId).collection('Cart-Items').doc(productId).delete();
+    await FirebaseFirestore.instance
+        .collection('Cart')
+        .doc(currentUserId)
+        .collection('Cart-Items')
+        .doc(productId)
+        .delete();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -223,13 +235,37 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void updateQuantity(String productId, int newQuantity) async {
-    await FirebaseFirestore.instance.collection('Cart').doc(widget.userId).collection('Cart-Items').doc(productId).update({
+    await FirebaseFirestore.instance
+        .collection('Cart')
+        .doc(currentUserId)
+        .collection('Cart-Items')
+        .doc(productId)
+        .update({
       'quantity': newQuantity,
     });
 
     // Refresh the product list to reflect the updated quantity
     fetchProducts();
+    calculateTotals();
   }
+
+  double subTotal = 0;
+  double gstAmount = 0;
+  double totalAmount = 0;
+
+  void calculateTotals() {
+    subTotal = 0;
+    for (var doc in ItemList) {
+      double price = double.tryParse(doc["Product Price"].toString()) ?? 0;
+      int qty = doc["quantity"] ?? 1;
+      subTotal += price * qty;
+    }
+
+    gstAmount = subTotal * 0.18; // 18% GST (change rate if needed)
+    totalAmount = subTotal + gstAmount;
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -241,162 +277,212 @@ class _CartScreenState extends State<CartScreen> {
       body: SafeArea(
         child: ItemList.isEmpty
             ? Center(child: Text('No Items in Cart'))
-            : ListView.separated(
-                itemCount: ItemList.length,
-                separatorBuilder: (context, index) {
-                  return SizedBox();
-                },
-                itemBuilder: (context, index) {
-                  var doc = ItemList[index];
-                  int quantity = doc["quantity"];
-
-                  return InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CartOrderConfirmationScreen(
-                            itemName: doc["Product Name"],
-                            itemImage: doc["Product Image"],
-                            itemPrice: doc["Product Price"],
-                            itemQuantity: '${doc["Product Quantity"]}',
-                            peoductDesc: doc['Product Desc'].toString(),
-                            quantity: '$quantity',
-                            productId: doc.id, userId: widget.userId,
-                          ),
-                        ),
-                      );
+            : Stack(
+                children: [
+                  ListView.separated(
+                    itemCount: ItemList.length,
+                    separatorBuilder: (context, index) {
+                      return SizedBox();
                     },
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(15.0),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                    itemBuilder: (context, index) {
+                      var doc = ItemList[index];
+                      int quantity = doc["quantity"];
+
+                      return InkWell(
+                        onTap: () {
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (context) => CartOrderConfirmationScreen(
+                          //       itemName: doc["Product Name"],
+                          //       itemImage: doc["Product Image"],
+                          //       itemPrice: doc["Product Price"],
+                          //       itemQuantity: '${doc["Product Quantity"]}',
+                          //       peoductDesc: doc['Product Desc'].toString(),
+                          //       quantity: '$quantity',
+                          //       productId: doc.id,
+                          //       userId: currentUserId,
+                          //     ),
+                          //   ),
+                          // );
+                        },
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(15.0),
+                              child: Column(
                                 children: [
                                   Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Container(
-                                        child: Column(
-                                          children: [
-                                            Image.network(
-                                              doc["Product Image"],
-                                              width: 100,
-                                              height: 100,
-                                              fit: BoxFit.cover,
-                                            ),
-                                            Text(
-                                                'Qty: ${doc["quantity"].toString()}'),
-                                          ],
-                                        ),
-                                      ),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                      Row(
                                         children: [
-                                          Row(
-                                            children: [
-                                              // Text(doc.id),
-                                              Text(
-                                                doc["Product Name"],
-                                                style: TextStyle(
-                                                  fontSize: 20,
+                                          Container(
+                                            child: Column(
+                                              children: [
+                                                Image.network(
+                                                  doc["Product Image"],
+                                                  width: 100,
+                                                  height: 100,
+                                                  fit: BoxFit.contain,
                                                 ),
+                                                Text(
+                                                    'Qty: ${doc["quantity"].toString()}'),
+                                              ],
+                                            ),
+                                          ),
+                                          SizedBox(width: 10,),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  // Text(doc.id),
+                                                  SizedBox(
+                                                    width: 120.w,
+                                                    child: Text(
+                                                      doc["Product Name"],
+                                                      style: TextStyle(
+                                                        fontSize: 20,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    " (${doc["Product Quantity"]})",
+                                                    style: TextStyle(
+                                                      fontSize: 20,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                               Text(
-                                                " (${doc["Product Quantity"]})",
+                                                '₹ ${doc["Product Price"]}',
                                                 style: TextStyle(
-                                                  fontSize: 20,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              Container(
+                                                width: 200,
+                                                child: Text(
+                                                  '${doc['Product Desc']}',
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  maxLines: 3,
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          Text(
-                                            '₹ ${doc["Product Price"]}',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                        ],
+                                      ),
+                                      Column(
+                                        children: [
+                                          IconButton(
+                                            onPressed: () {
+                                              DeleteProduct(doc.id);
+                                            },
+                                            icon: Icon(Icons.delete),
                                           ),
-                                          Container(
-                                            width: 200,
-                                            child: Text(
-                                              '${doc['Product Desc']}',
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 3,
-                                            ),
-                                          ),
+                                          SizedBox(height: 50),
                                         ],
                                       ),
                                     ],
                                   ),
-                                  Column(
-                                    children: [
-                                      IconButton(
-                                        onPressed: () {
-                                          DeleteProduct(doc.id);
-                                        },
-                                        icon: Icon(Icons.delete),
+                                  SizedBox(
+                                    height: 5,
+                                  ),
+                                  // Increment/Decrement Quantity Row
+                                  Container(
+                                    height: 35.h,
+                                    width: 110,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.grey,
                                       ),
-                                      SizedBox(height: 50),
-                                    ],
+                                      borderRadius: BorderRadius.circular(10.r),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        IconButton(
+                                          onPressed: () {
+                                            if (quantity > 1) {
+                                              setState(() {
+                                                quantity--;
+                                              });
+                                              updateQuantity(doc.id, quantity);
+                                            }
+                                          },
+                                          icon: Icon(Icons.remove),
+                                        ),
+                                        Text(
+                                          quantity.toString(),
+                                          style: TextStyle(fontSize: 18),
+                                        ),
+                                        IconButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              quantity++;
+                                            });
+                                            updateQuantity(doc.id, quantity);
+                                          },
+                                          icon: Icon(Icons.add),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              // Increment/Decrement Quantity Row
-                              Container(
-                                height: 35.h,
-                                width: 110,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10.r),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    IconButton(
-                                      onPressed: () {
-                                        if (quantity > 1) {
-                                          setState(() {
-                                            quantity--;
-                                          });
-                                          updateQuantity(doc.id, quantity);
-                                        }
-                                      },
-                                      icon: Icon(Icons.remove),
-                                    ),
-                                    Text(
-                                      quantity.toString(),
-                                      style: TextStyle(fontSize: 18),
-                                    ),
-                                    IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          quantity++;
-                                        });
-                                        updateQuantity(doc.id, quantity);
-                                      },
-                                      icon: Icon(Icons.add),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                            Divider()
+                          ],
                         ),
-                        Divider()
-                      ],
+                      );
+                    },
+                  ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 25.0, vertical: 35),
+                      child: PrimaryButton(
+                          title: 'Confirm & Proceed',
+                          bgColor: Colors.orange,
+                          ontTap: () {
+                            calculateTotals();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => NewCartOrderAddressScreen(
+                                  userId: currentUserId,
+                                  cartItems: ItemList.map((doc) => {
+                                        "Product Name": doc["Product Name"],
+                                        "Product Image": doc["Product Image"],
+                                        "Product Quantity":
+                                            doc["Product Quantity"],
+                                        "Quantity": doc["quantity"],
+                                        "Product Price": doc["Product Price"],
+                                        "Product Desc": doc["Product Desc"],
+                                      }).toList(),
+                                  // subTotal: "1000", // calculate from cart
+                                  // GSTAmount: "100", // calculate from cart
+                                  // totalPrice: "1100", // calculate from cart
+
+                                  subTotal: subTotal.toStringAsFixed(2),
+                                  GSTAmount: gstAmount.toStringAsFixed(2),
+                                  totalPrice: totalAmount.toStringAsFixed(2),
+                                ),
+                              ),
+                            );
+                          }),
                     ),
-                  );
-                },
+                  )
+                ],
               ),
       ),
     );

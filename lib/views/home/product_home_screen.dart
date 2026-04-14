@@ -1,17 +1,21 @@
+import 'package:bulk_basket/controller/location_controller.dart';
 import 'package:bulk_basket/views/auth/login_screen.dart';
 import 'package:bulk_basket/views/cart/cart_screen.dart';
-import 'package:bulk_basket/views/common/temp1.dart';
 import 'package:bulk_basket/views/home/location_screen.dart';
 import 'package:bulk_basket/views/home/order_history_screen.dart';
 import 'package:bulk_basket/views/home/product_details_screen.dart';
 import 'package:bulk_basket/views/home/profile_screen.dart';
-import 'package:bulk_basket/views/home/temp2.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+import 'new_order_history_screen.dart';
 
 class ProductScreen extends StatefulWidget {
   final String? userId;
@@ -48,12 +52,13 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   /// Fetch Snacks & Biscuits from Firestore
-  void fetchProduct() async {
+  Future<void> fetchProduct() async {
     try {
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('New Product')
           .doc('Category')
           .collection('Snacks & Biscuits')
+          .where('approvalStatus', isEqualTo: 'approved')
           .get();
 
       setState(() {
@@ -68,12 +73,13 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   /// Fetch Rice & Flour from Firestore
-  void riceAndFlour() async {
+  Future<void> riceAndFlour() async {
     try {
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('New Product')
           .doc('Category')
           .collection('Rice and floor')
+          .where('approvalStatus', isEqualTo: 'approved')
           .get();
 
       setState(() {
@@ -87,12 +93,13 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   /// Fetch Dry Fruits from Firestore
-  void dryFruitsCategory() async {
+  Future<void> dryFruitsCategory() async {
     try {
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('New Product')
           .doc('Category')
           .collection('Dry Fruits')
+          .where('approvalStatus', isEqualTo: 'approved')
           .get();
 
       setState(() {
@@ -106,12 +113,13 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   //fetch cereals category data
-  void cerealsCategory() async {
+  Future<void> cerealsCategory() async {
     try {
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('New Product')
           .doc('Category')
           .collection('Cereals')
+          .where('approvalStatus', isEqualTo: 'approved')
           .get();
 
       setState(() {
@@ -125,12 +133,13 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   //spices
-  void spicesCategory() async {
+  Future<void> spicesCategory() async {
     try {
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('New Product')
           .doc('Category')
           .collection('Spices')
+          .where('approvalStatus', isEqualTo: 'approved')
           .get();
 
       setState(() {
@@ -144,12 +153,13 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   //skin care category
-  void skinCareCategory() async {
+  Future<void> skinCareCategory() async {
     try {
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('New Product')
           .doc('Category')
           .collection('Skin Care')
+          .where('approvalStatus', isEqualTo: 'approved')
           .get();
 
       setState(() {
@@ -163,12 +173,13 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
 // grooming items
-  void groomingItemsCategory() async {
+  Future<void> groomingItemsCategory() async {
     try {
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('New Product')
           .doc('Category')
           .collection('Grooming Items')
+          .where('approvalStatus', isEqualTo: 'approved')
           .get();
 
       setState(() {
@@ -179,6 +190,31 @@ class _ProductScreenState extends State<ProductScreen> {
     } catch (e) {
       print("Error fetching grooming items: $e");
     }
+  }
+
+  Future<void> refreshAll() async {
+    await fetchProduct();
+    await riceAndFlour();
+    await dryFruitsCategory();
+    await cerealsCategory();
+    await spicesCategory();
+    await skinCareCategory();
+    await groomingItemsCategory();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      backgroundColor: Colors.white,
+      
+      content: Text("Products refreshed", textAlign: TextAlign.center,style: TextStyle(color: Colors.green,fontWeight: FontWeight.w600),),
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.only(bottom: 80, left: 100, right: 100),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      duration: Duration(seconds: 2),
+    ),
+  );
+
   }
 
   /// **Search Functionality Across All Categories**
@@ -224,9 +260,10 @@ class _ProductScreenState extends State<ProductScreen> {
 
   int num = 0;
   void fetchCartItem() {
+    final userId = GetStorage().read('userId');
     FirebaseFirestore.instance
         .collection('Cart')
-        .doc(widget.userId)
+        .doc(userId)
         .collection('Cart-Items')
         .snapshots()
         .listen((snapshot) {
@@ -237,6 +274,7 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Future<void> logOut() async {
+    GetStorage().erase();
     await FirebaseAuth.instance.signOut();
     Navigator.popUntil(context, (route) => route.isFirst);
     Navigator.pushReplacement(
@@ -254,33 +292,54 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  
+  final locationController = Get.find<LocationController>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text('BulkBasket'),
+        title: Row(
+          children: [
+            Icon(
+              Icons.location_on_sharp,
+              size: 30,
+              color: Colors.red,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Wlinkit',
+                  style: TextStyle(fontSize: 18),
+                ),
+                SizedBox(
+                    width: 300,
+                    child: Text(locationController.address.value,
+                        maxLines: 2, style: TextStyle(fontSize: 8)))
+              ],
+            ),
+          ],
+        ),
         // leading: ,
         flexibleSpace: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [Colors.green,Colors.white],
-            begin: Alignment.topCenter, end: Alignment.bottomCenter
-            )
-          ),
+              gradient: LinearGradient(
+                  colors: [Colors.green, Colors.white],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter)),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10.0),
-            child: IconButton(
-                onPressed: () {
-                  logOut();
-                  // Navigator.push(context, MaterialPageRoute(builder: (context) => LocationScreen(),),);
-                },
-                icon: Icon(Icons.logout_outlined)),
-          )
-        ],
+        // actions: [
+        //   Padding(
+        //     padding: const EdgeInsets.only(right: 10.0),
+        //     child: IconButton(
+        //         onPressed: () {
+        //           // logOut();
+        //           Navigator.push(context, MaterialPageRoute(builder: (context) => LocationScreen(),),);
+        //         },
+        //         icon: Icon(Icons.logout_outlined)),
+        //   )
+        // ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(60),
           child: Padding(
@@ -306,86 +365,96 @@ class _ProductScreenState extends State<ProductScreen> {
             ? Center(child: CircularProgressIndicator())
             : Padding(
                 padding: const EdgeInsets.all(10),
-                child: ListView(
-                  children: [
-                    SizedBox(height: 10),
-                    isSearching
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              sectionTitle("Search Results"),
-                              filteredProducts.isEmpty
-                                  ? Center(child: Text("No products found"))
-                                  : buildHorizontalList(filteredProducts),
-                              SizedBox(height: 20),
-                            ],
-                          )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              CarouselSlider.builder(
-                                itemBuilder: (contex, index, realIdnex) {
-                                  return Image.asset(sliderImage[index]);
-                                },
-                                itemCount: 4,
-                                options: CarouselOptions(
-                                  autoPlay: true,
-                                  viewportFraction: 1,
-                                  onPageChanged: (index, reason) {
-                                    setState(() {
-                                      activeIndex = index;
-                                    });
+                child: RefreshIndicator(
+                  onRefresh: refreshAll,
+                  child: ListView(
+                    children: [
+                      SizedBox(height: 10),
+                      isSearching
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                sectionTitle("Search Results"),
+                                filteredProducts.isEmpty
+                                    ? Center(child: Text("No products found"))
+                                    : buildHorizontalList(filteredProducts),
+                                SizedBox(height: 20),
+                              ],
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CarouselSlider.builder(
+                                  itemBuilder: (contex, index, realIdnex) {
+                                    return Image.asset(sliderImage[index]);
                                   },
+                                  itemCount: 4,
+                                  options: CarouselOptions(
+                                    autoPlay: true,
+                                    viewportFraction: 1,
+                                    onPageChanged: (index, reason) {
+                                      setState(() {
+                                        activeIndex = index;
+                                      });
+                                    },
+                                  ),
                                 ),
-                              ),
-                              Center(
-                                child: Transform.scale(
-                                  scale: 0.5,
-                                  child: AnimatedSmoothIndicator(
-                                      activeIndex: activeIndex,
-                                      count: sliderImage.length),
+                                Center(
+                                  child: Transform.scale(
+                                    scale: 0.5,
+                                    child: AnimatedSmoothIndicator(
+                                        activeIndex: activeIndex,
+                                        count: sliderImage.length),
+                                  ),
                                 ),
-                              ),
-                              sectionTitle("Snacks & Biscuits"),
-                              productList.isEmpty
-                                  ? Center(child: Text("No products available"))
-                                  : buildHorizontalList(productList),
-                              SizedBox(height: 8),
-                              sectionTitle("Rice and Flour"),
-                              riceAndFlourList.isEmpty
-                                  ? Center(child: Text("No products available"))
-                                  : buildHorizontalList(riceAndFlourList),
-                              SizedBox(height: 8),
-                              sectionTitle("Dry Fruits"),
-                              dryFruitsList.isEmpty
-                                  ? Center(child: Text("No products available"))
-                                  : buildHorizontalList(dryFruitsList),
-                              SizedBox(height: 8), // add
-                              sectionTitle("Cereals"),
-                              cerealsList.isEmpty
-                                  ? Center(child: Text("No products available"))
-                                  : buildHorizontalList(cerealsList),
-                              SizedBox(height: 8),
-                              sectionTitle("Spices"),
-                              spicesList.isEmpty
-                                  ? Center(child: Text("No products available"))
-                                  : buildHorizontalList(spicesList),
-                              SizedBox(height: 8),
-                              sectionTitle("Skin Care"),
-                              skinCareProductList.isEmpty
-                                  ? Center(child: Text("No products available"))
-                                  : buildHorizontalList(skinCareProductList),
-                              SizedBox(height: 8),
-                              sectionTitle("Grooming Items"),
-                              groomingItemsList.isEmpty
-                                  ? Center(child: Text("No products available"))
-                                  : buildHorizontalList(groomingItemsList),
-                            ],
-                          ),
-                    SizedBox(
-                      height: 100,
-                    ),
-                  ],
+                                sectionTitle("Snacks & Biscuits"),
+                                productList.isEmpty
+                                    ? Center(
+                                        child: Text("No products available"))
+                                    : buildHorizontalList(productList),
+                                SizedBox(height: 8),
+                                sectionTitle("Rice and Flour"),
+                                riceAndFlourList.isEmpty
+                                    ? Center(
+                                        child: Text("No products available"))
+                                    : buildHorizontalList(riceAndFlourList),
+                                SizedBox(height: 8),
+                                sectionTitle("Dry Fruits"),
+                                dryFruitsList.isEmpty
+                                    ? Center(
+                                        child: Text("No products available"))
+                                    : buildHorizontalList(dryFruitsList),
+                                SizedBox(height: 8), // add
+                                sectionTitle("Cereals"),
+                                cerealsList.isEmpty
+                                    ? Center(
+                                        child: Text("No products available"))
+                                    : buildHorizontalList(cerealsList),
+                                SizedBox(height: 8),
+                                sectionTitle("Spices"),
+                                spicesList.isEmpty
+                                    ? Center(
+                                        child: Text("No products available"))
+                                    : buildHorizontalList(spicesList),
+                                SizedBox(height: 8),
+                                sectionTitle("Skin Care"),
+                                skinCareProductList.isEmpty
+                                    ? Center(
+                                        child: Text("No products available"))
+                                    : buildHorizontalList(skinCareProductList),
+                                SizedBox(height: 8),
+                                sectionTitle("Grooming Items"),
+                                groomingItemsList.isEmpty
+                                    ? Center(
+                                        child: Text("No products available"))
+                                    : buildHorizontalList(groomingItemsList),
+                              ],
+                            ),
+                      SizedBox(
+                        height: 100,
+                      ),
+                    ],
+                  ),
                 ),
               ),
         Align(
@@ -410,9 +479,11 @@ class _ProductScreenState extends State<ProductScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CartScreen(userId: widget.userId.toString(),),
+                        builder: (context) => CartScreen(
+                          userId: widget.userId.toString(),
+                        ),
                         // builder: (context) => Temp1(
-                          // userId: widget.userId.toString(),
+                        // userId: widget.userId.toString(),
                         // ),
                       ),
                     );
@@ -487,7 +558,8 @@ class _ProductScreenState extends State<ProductScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => OrderHistoryScreen(
+                        // builder: (context) => OrderHistoryScreen(
+                        builder: (context) => CartOrderHistoryScreen(
                           userId: widget.userId.toString(),
                         ),
                       ),

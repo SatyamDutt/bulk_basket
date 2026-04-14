@@ -47,8 +47,12 @@ dependencies:
   flutter_bloc: ^9.1.0
   json_annotation: ^4.9.0
   device_preview: ^1.2.0
-  # geolocator: ^14.0.2
-  # geocoding: ^4.0.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  get: ^4.7.2
+  intl: ^0.20.2
+  get_storage: ^2.1.1
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:

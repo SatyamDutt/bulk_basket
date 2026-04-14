@@ -60,9 +60,11 @@ import 'package:bulk_basket/views/auth/login_screen.dart';
 import 'package:bulk_basket/views/home/about_screen.dart';
 import 'package:bulk_basket/views/home/help_screen.dart';
 import 'package:bulk_basket/views/home/order_history_screen.dart';
+import 'package:bulk_basket/views/home/order_tracking_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userId;
@@ -104,13 +106,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   var screens = [
     OrderHistoryScreen(userId: FirebaseAuth.instance.currentUser!.uid),
     HelpScreen(),
-    AboutScreen()
+    AboutScreen(),
+    // OrderTrackingUIScreen(),
   ];
 
   List buttonList = ["Order History", "Help", "About"];
 
   Future<void> logOut() async {
     await FirebaseAuth.instance.signOut();
+    GetStorage().erase();
     Navigator.popUntil(context, (route) => route.isFirst);
     Navigator.pushReplacement(
       context,

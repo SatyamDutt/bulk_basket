@@ -1,10 +1,12 @@
+import 'dart:math';
+
 import 'package:bulk_basket/views/common/input_label.dart';
 import 'package:bulk_basket/views/common/primary_button.dart';
 import 'package:bulk_basket/views/common/primary_textField.dart';
 import 'package:bulk_basket/views/home/product_home_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:get_storage/get_storage.dart';
 
 class OrderAddressScreen extends StatefulWidget {
   final String userId;
@@ -28,79 +30,13 @@ class OrderAddressScreen extends StatefulWidget {
       required this.GSTAmount,
       required this.totalPrice,
       required this.subTotal,
-      required this.userId
-      });
+      required this.userId});
 
   @override
   State<OrderAddressScreen> createState() => _OrderAddressScreenState();
 }
 
 class _OrderAddressScreenState extends State<OrderAddressScreen> {
-  //  late int quantity;
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   quantity = int.parse(widget.quantity);
-  // }
-
-  //payment
-  late Razorpay _razorpay;
-
-  @override
-  void initState() {
-    super.initState();
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-  }
-
-  @override
-  void dispose() {
-    _razorpay.clear();
-    super.dispose();
-  }
-
-  void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Payment Successful: ${response.paymentId}")),
-    );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProductScreen(userId: widget.userId,),
-      ),
-    );
-    // Navigate to Order Success Page or Update Order in Firestore
-  }
-
-  void _handlePaymentError(PaymentFailureResponse response) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Payment Failed: ${response.message}")),
-    );
-  }
-
-  void _openCheckout() {
-    double totalAmount = double.tryParse(widget.totalPrice) ?? 0;
-    var options = {
-      'key': 'rzp_test_VJxuQHz7BdSF7I', // Replace with your Razorpay Key ID
-      'amount': (totalAmount * 100).toInt(), // Convert to paise
-      'name': widget.itemName,
-      'description': "Payment for ${widget.itemName}",
-      'prefill': {
-        'contact': '9999999999', // Replace with actual user contact
-        'email': 'user@example.com',
-      },
-      'theme': {'color': '#FF9800'},
-    };
-
-    try {
-      _razorpay.open(options);
-    } catch (e) {
-      print("Error: $e");
-    }
-  }
-  //end payment
-
   TextEditingController deliveryAddress = TextEditingController();
 
   TextEditingController villageNameController = TextEditingController();
@@ -109,7 +45,36 @@ class _OrderAddressScreenState extends State<OrderAddressScreen> {
   TextEditingController postalCodeController = TextEditingController();
   TextEditingController stateNameController = TextEditingController();
 
+
+/// Generate a unique order ID like ORDR1234567
+Future<String> generateUniqueOrderId() async {
+  final random = Random();
+  String orderId = '';
+
+  bool exists = true;
+
+  while (exists) {
+    // Generate 7 digit random number
+    int randomNumber = 1000000 + random.nextInt(9000000);
+    orderId = "ORDR$randomNumber";
+
+    // Check in Firestore if this order ID already exists
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('New Order')
+        .where('OrderId', isEqualTo: orderId)
+        .get();
+
+    exists = querySnapshot.docs.isNotEmpty;
+  }
+
+  return orderId;
+}
+
+
   void PurchaseItem() async {
+
+    String orderId = await generateUniqueOrderId();
+
     final String DeliveryAddress = deliveryAddress.text.toString();
 
     final String villageName = villageNameController.text.trim();
@@ -134,31 +99,11 @@ class _OrderAddressScreenState extends State<OrderAddressScreen> {
       );
     } else {
       try {
-        // _openCheckout;
-        double totalAmount = double.tryParse(widget.totalPrice) ?? 0;
-        var options = {
-          'key': 'rzp_test_VJxuQHz7BdSF7I', // Replace with your Razorpay Key ID
-          'amount': (totalAmount * 100).toInt(), // Convert to paise
-          'name': widget.itemName,
-          'description': "Payment for ${widget.itemName}",
-          'prefill': {
-            'contact': '9999999999', // Replace with actual user contact
-            'email': 'user@example.com',
-          },
-          'theme': {'color': '#FF9800'},
-        };
-
-        try {
-          _razorpay.open(options);
-        } catch (e) {
-          print("Error: $e");
-        }
-
         await FirebaseFirestore.instance
             .collection('New Order')
-            // .doc(widget.userId)
+            .doc(orderId)
             // .collection('Order-Items')
-            .add({
+            .set({
           'Product Name': widget.itemName,
           'Product Image': widget.itemImage,
           'Product Quantity': widget.itemQuantity,
@@ -170,10 +115,16 @@ class _OrderAddressScreenState extends State<OrderAddressScreen> {
           'Delivery Address':
               '${villageName}, ${landmark}, ${cityName}, ${postalCode}, ${stateName} ',
           'Created At': DateTime.now(),
-          'UserId':widget.userId
+          'UserId': widget.userId,
+          'OrderStatus': 'Order Placed',
+          'OrderId':orderId
         });
 
-        await FirebaseFirestore.instance.collection('Order History').doc(widget.userId).collection('Order-Items').add({
+        await FirebaseFirestore.instance
+            .collection('All Order')
+            .doc(orderId)
+            // .collection('Order-Items')
+            .set({
           'Product Name': widget.itemName,
           'Product Image': widget.itemImage,
           'Product Quantity': widget.itemQuantity,
@@ -185,51 +136,32 @@ class _OrderAddressScreenState extends State<OrderAddressScreen> {
           'Delivery Address':
               '${villageName}, ${landmark}, ${cityName}, ${postalCode}, ${stateName} ',
           'Created At': DateTime.now(),
+          // 'UserId': widget.userId,
+          'UserId': GetStorage().read('userId'),
+          'OrderStatus': 'Order Placed',
+          'OrderId':orderId
         });
 
-        // showDialog(
-        //     context: context,
-        //     builder: (context) {
-        //       return AlertDialog(
-        //         backgroundColor: Colors.white,
-        //         actions: [
-        //           MaterialButton(
-        //             onPressed: () {
-        //               Navigator.pop(context);
-        //               Navigator.pushReplacement(
-        //                 context,
-        //                 MaterialPageRoute(
-        //                   builder: (context) => HomeScreen(),
-        //                 ),
-        //               );
-        //             },
-        //             child: Text('Done'),
-        //             // child: Icon(Icons.clear),
-        //           )
-        //         ],
-        //         content: Container(
-        //           height: 150,
-        //           width: double.maxFinite,
-        //           child: Column(
-        //             children: [
-        //               // SizedBox(height: 10.h,),
-        //               Image.asset(
-        //                 'assets/successLogo.png',
-        //                 height: 100,
-        //                 width: 100,
-        //               ),
-        //               SizedBox(
-        //                 height: 10.h,
-        //               ),
-        //               Text(
-        //                 'Your order successfully placed!',
-        //                 style: AppStyle.smallFont,
-        //               ),
-        //             ],
-        //           ),
-        //         ),
-        //       );
-        //     });
+        await FirebaseFirestore.instance
+            .collection('Order History')
+            .doc(widget.userId)
+            .collection('Order-Items')
+            .doc(orderId)
+            .set({
+          'Product Name': widget.itemName,
+          'Product Image': widget.itemImage,
+          'Product Quantity': widget.itemQuantity,
+          'Quantity': widget.quantity,
+          'Product Price': widget.itemPrice,
+          'SubTotal': widget.subTotal,
+          'GST Amount': widget.GSTAmount,
+          'Total Amount': widget.totalPrice,
+          'Delivery Address':
+              '${villageName}, ${landmark}, ${cityName}, ${postalCode}, ${stateName} ',
+          'Created At': DateTime.now(),
+          'OrderStatus': 'Order Placed',
+          'OrderId':orderId
+        });
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -238,6 +170,8 @@ class _OrderAddressScreenState extends State<OrderAddressScreen> {
             duration: Duration(seconds: 1),
           ),
         );
+
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ProductScreen()));
       } catch (e) {
         print('Error in order ');
       }
@@ -326,20 +260,6 @@ class _OrderAddressScreenState extends State<OrderAddressScreen> {
               title: 'Proceed to Payment',
               ontTap: () {
                 PurchaseItem();
-                _openCheckout;
-
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => PaymentScreen(
-                //       totalAmount: double.tryParse(widget.totalPrice) ?? 0,
-                //       itemName: widget.itemName,
-                //       itemImage: widget.itemImage,
-                //       itemPrice: widget.itemPrice,
-                //       itemQuantity: widget.itemQuantity,
-                //     ),
-                //   ),
-                // );
               },
             ),
           ],

@@ -17,6 +17,7 @@ import 'package:bulk_basket/bloc/login/login_event.dart';
 import 'package:bulk_basket/bloc/login/login_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   LoginBloc() : super(LoginInitial()) {
@@ -36,6 +37,10 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(
               email: event.email, password: event.password);
+
+              
+
+      GetStorage().write('userId',userCredential.user!.uid);
 
       emit(LoginSuccess(userCredential.user!.uid));
     } on FirebaseAuthException catch (e) {
