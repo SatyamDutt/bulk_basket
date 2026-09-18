@@ -6,9 +6,11 @@ class PrimaryButton extends StatefulWidget {
   final Function()? ontTap;
   final Color? textColor;
   final Color? bgColor ;
+  final bool? isLoading;
   const PrimaryButton({super.key, required this.title, required this.ontTap,
   this.textColor = Colors.white,
   this.bgColor  = Colors.green,
+  this.isLoading = false
   });
 
   @override
@@ -25,7 +27,8 @@ class _PrimaryButtonState extends State<PrimaryButton> {
         borderRadius: BorderRadius.circular(10),
       ),
       color: widget.bgColor,
-      onPressed: widget.ontTap,
+      disabledColor: Colors.grey.withOpacity(0.1),
+      onPressed: widget.isLoading == true ? null : widget.ontTap,
       // () {
       //   Navigator.pushReplacement(
       //     context,
@@ -34,7 +37,16 @@ class _PrimaryButtonState extends State<PrimaryButton> {
       //     ),
       //   );)
       // },
-      child: Text(
+      child: widget.isLoading == true
+          ? const SizedBox(
+              height: 22,
+              width: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.green,
+              ),
+            )
+          : Text(
         widget.title,
         style: TextStyle(
           color: widget.textColor,

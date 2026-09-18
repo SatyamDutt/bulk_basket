@@ -1,10 +1,13 @@
 import 'dart:math';
+import 'package:bulk_basket/resources/app_validators.dart';
 import 'package:bulk_basket/views/common/input_label.dart';
 import 'package:bulk_basket/views/common/primary_button.dart';
 import 'package:bulk_basket/views/common/primary_textField.dart';
+import 'package:bulk_basket/views/home/payment_screen.dart';
 import 'package:bulk_basket/views/home/product_home_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/state_manager.dart';
 import 'package:get_storage/get_storage.dart';
 
@@ -429,6 +432,8 @@ class _NewCartOrderAddressScreenState extends State<NewCartOrderAddressScreen> {
     });
   }
 
+  final _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -439,200 +444,215 @@ class _NewCartOrderAddressScreenState extends State<NewCartOrderAddressScreen> {
       body: Obx( () =>Stack(
         children: [
           
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 25.0),
-            child: ListView(
-              children: [
-                SizedBox(
-                  height: 20,
-                ),
-          
-                InputLabel(title: 'House No. Building Name'),
-                SizedBox(
-                  height: 6,
-                ),
-                PrimaryTextfield(
-                    inputValue: villageNameController, hintText: 'Enter address'),
-                SizedBox(
-                  height: 10,
-                ),
-                // Text(widget.userId),
-                InputLabel(title: 'Landmark'),
-                SizedBox(
-                  height: 6,
-                ),
-                PrimaryTextfield(
-                    inputValue: landmarkController,
-                    hintText: 'Reliance Petrol Pump'),
-                SizedBox(
-                  height: 10,
-                ),
-                InputLabel(title: 'City name'),
-                SizedBox(
-                  height: 6,
-                ),
-                PrimaryTextfield(inputValue: cityNameController, hintText: 'Patna'),
-          
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: 10,
-                          ),
-                          InputLabel(title: 'Postal code'),
-                          SizedBox(
-                            height: 6,
-                          ),
-                          PrimaryTextfield(
-                            inputValue: postalCodeController,
-                            hintText: '562102',
-                            inputType: TextInputType.phone,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: 10,
-                          ),
-                          InputLabel(title: 'State'),
-                          SizedBox(
-                            height: 6,
-                          ),
-                          PrimaryTextfield(
-                              inputValue: stateNameController, hintText: 'Bihar'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-          
-                SizedBox(
-                  height: 18,
-                ),
-               
-          
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  margin: const EdgeInsets.only(top: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+          Form(
+            key: _formKey,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 25.0),
+              child: ListView(
+                children: [
+                  SizedBox(
+                    height: 20,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            
+                  InputLabel(title: 'House No. Building Name'),
+                  SizedBox(
+                    height: 6,
+                  ),
+                  PrimaryTextfield(
+                      inputValue: villageNameController, hintText: 'Enter address',
+                      validator: (value) => AppValidators.houseNo(value),
+                      ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  // Text(widget.userId),
+                  InputLabel(title: 'Landmark'),
+                  SizedBox(
+                    height: 6,
+                  ),
+                  PrimaryTextfield(
+                      inputValue: landmarkController,
+                      hintText: 'Reliance Petrol Pump',
+                      validator: (value) => AppValidators.landmark(value),
+                      ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  InputLabel(title: 'City name'),
+                  SizedBox(
+                    height: 6,
+                  ),
+                  PrimaryTextfield(inputValue: cityNameController, hintText: 'Patna',
+                  validator: (value) => AppValidators.city(value),
+                  ),
+            
+                  Row(
                     children: [
-                      // ---- Payment Options ----
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Payment Option',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                      Expanded(
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: 10,
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade50,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: Colors.green.shade400),
+                            InputLabel(title: 'Postal code'),
+                            SizedBox(
+                              height: 6,
                             ),
-                            child: const Text(
-                              'Cash On Delivery',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.green,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            PrimaryTextfield(
+                              inputValue: postalCodeController,
+                              hintText: '562102',
+                              inputType: TextInputType.phone,
+                              validator: (value) => AppValidators.pinCode(value),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-          
-                      const SizedBox(height: 12),
-                      const Divider(thickness: 1.2, color: Colors.grey),
-          
-                      const SizedBox(height: 10),
-          
-                      // ---- Subtotal ----
-                      _buildPriceRow('Sub Total', '₹ ${widget.subTotal}'),
-          
-                      const SizedBox(height: 8),
-          
-                      // ---- GST ----
-                      _buildPriceRow('GST Charges', '₹ ${widget.GSTAmount}'),
-          
-                      const SizedBox(height: 12),
-                      const Divider(thickness: 1.2, color: Colors.grey),
-          
-                      const SizedBox(height: 12),
-          
-                      // ---- Total ----
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Total Amount',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            '₹ ${widget.totalPrice}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blueAccent,
-                            ),
-                          ),
-                        ],
+                      SizedBox(
+                        width: 10,
                       ),
-          
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          'Inclusive of all taxes',
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: 10,
+                            ),
+                            InputLabel(title: 'State'),
+                            SizedBox(
+                              height: 6,
+                            ),
+                            PrimaryTextfield(
+                                inputValue: stateNameController, hintText: 'Bihar',
+                                validator: (value) => AppValidators.state(value),
+                                ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-                SizedBox(height: 15,),
-          
-                PrimaryButton(
-                  bgColor: Colors.green,
-                  textColor: Colors.white,
-                  title: 'Place Order',
-                  ontTap: () {
-                    PurchaseItem();
-                  },
-                ),
-              ],
+            
+                  SizedBox(
+                    height: 18,
+                  ),
+                 
+            
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    margin: const EdgeInsets.only(top: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ---- Payment Options ----
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Payment Option',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade50,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.green.shade400),
+                              ),
+                              child: const Text(
+                                'Cash On Delivery',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+            
+                        const SizedBox(height: 12),
+                        const Divider(thickness: 1.2, color: Colors.grey),
+            
+                        const SizedBox(height: 10),
+            
+                        // ---- Subtotal ----
+                        _buildPriceRow('Sub Total', '₹ ${widget.subTotal}'),
+            
+                        const SizedBox(height: 8),
+            
+                        // ---- GST ----
+                        _buildPriceRow('GST Charges', '₹ ${widget.GSTAmount}'),
+            
+                        const SizedBox(height: 12),
+                        const Divider(thickness: 1.2, color: Colors.grey),
+            
+                        const SizedBox(height: 12),
+            
+                        // ---- Total ----
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total Amount',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            Text(
+                              '₹ ${widget.totalPrice}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blueAccent,
+                              ),
+                            ),
+                          ],
+                        ),
+            
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            'Inclusive of all taxes',
+                            style:
+                                TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 15,),
+            
+                  PrimaryButton(
+                    bgColor: Colors.green,
+                    textColor: Colors.white,
+                    title: 'Place Order',
+                    ontTap: () {
+                      if(_formKey.currentState!.validate()) {
+                        // PurchaseItem();
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentScreen(totalAmount: 100, itemName: "Apple")));
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
 

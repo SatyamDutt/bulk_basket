@@ -13,14 +13,14 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
       RegisterButtonPresssed event, Emitter<RegisterState> emit) async {
     emit(RegisterLoading());
 
-    if (event.email.isEmpty ||
-        event.password.isEmpty ||
-        event.name.isEmpty ||
-        event.address.isEmpty) {
-      emit(RegisterError('All Information are required'));
+    // if (event.email.isEmpty ||
+    //     event.password.isEmpty ||
+    //     event.name.isEmpty ||
+    //     event.address.isEmpty) {
+    //   emit(RegisterError('All Information are required'));
 
-      return;
-    }
+    //   return;
+    // }
 
     try {
       UserCredential userCredential = await FirebaseAuth.instance

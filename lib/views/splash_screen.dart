@@ -20,8 +20,8 @@ class _SplashScreenState extends State<SplashScreen> {
     @override
   void initState() {
     super.initState();
-    Timer(Duration(seconds: 3), () {
-      Navigator.push(
+    Timer(Duration(seconds: 5), () {
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) =>  (FirebaseAuth.instance.currentUser != null)
@@ -38,22 +38,29 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       // backgroundColor: Colors.white,
       backgroundColor: Color(0xff01bf61),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Center(
-            child: Image.asset('assets/wlinkit.png',
-            height: 300,    
-            width: 300,
-            ),
-          ),
-          // Padding(
-          //   padding: const EdgeInsets.all(25.0),
-          //   child: PrimaryButton(title: 'Get Started', ontTap: () {}),
-          // )
-        ],
-      ),
+
+      body: 
+      Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(image: AssetImage('assets/splash.png',),fit: BoxFit.fill)
+        ),
+      )
+      // Column(
+      //   mainAxisAlignment: MainAxisAlignment.center,
+      //   crossAxisAlignment: CrossAxisAlignment.center,
+      //   children: [
+      //     Center(
+      //       child: Image.asset('assets/wlinkit.png',
+      //       height: 300,    
+      //       width: 300,
+      //       ),
+      //     ),
+      //     // Padding(
+      //     //   padding: const EdgeInsets.all(25.0),
+      //     //   child: PrimaryButton(title: 'Get Started', ontTap: () {}),
+      //     // )
+      //   ],
+      // ),
     );
   }
 }

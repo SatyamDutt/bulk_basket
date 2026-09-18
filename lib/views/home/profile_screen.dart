@@ -55,7 +55,6 @@
 //   }
 // }
 
-
 import 'package:bulk_basket/views/auth/login_screen.dart';
 import 'package:bulk_basket/views/home/about_screen.dart';
 import 'package:bulk_basket/views/home/help_screen.dart';
@@ -65,6 +64,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
+
+import 'new_order_history_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userId;
@@ -104,7 +105,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   var screens = [
-    OrderHistoryScreen(userId: FirebaseAuth.instance.currentUser!.uid),
+    // OrderHistoryScreen(userId: FirebaseAuth.instance.currentUser!.uid),
+    CartOrderHistoryScreen(
+      userId: FirebaseAuth.instance.currentUser!.uid,
+    ),
     HelpScreen(),
     AboutScreen(),
     // OrderTrackingUIScreen(),

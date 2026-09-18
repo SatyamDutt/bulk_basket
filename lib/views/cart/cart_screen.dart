@@ -171,12 +171,14 @@
 //   }
 // }
 
+import 'package:bulk_basket/controller/location_controller.dart';
 import 'package:bulk_basket/views/cart/cart_order_confirmation_screen.dart';
 import 'package:bulk_basket/views/common/primary_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../home/new_cart_order_address_screen.dart';
 
@@ -265,7 +267,7 @@ class _CartScreenState extends State<CartScreen> {
     totalAmount = subTotal + gstAmount;
   }
 
-
+  final locationController = Get.find<LocationController>();
 
   @override
   Widget build(BuildContext context) {
@@ -450,36 +452,70 @@ class _CartScreenState extends State<CartScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 25.0, vertical: 35),
-                      child: PrimaryButton(
-                          title: 'Confirm & Proceed',
-                          bgColor: Colors.orange,
-                          ontTap: () {
-                            calculateTotals();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => NewCartOrderAddressScreen(
-                                  userId: currentUserId,
-                                  cartItems: ItemList.map((doc) => {
-                                        "Product Name": doc["Product Name"],
-                                        "Product Image": doc["Product Image"],
-                                        "Product Quantity":
-                                            doc["Product Quantity"],
-                                        "Quantity": doc["quantity"],
-                                        "Product Price": doc["Product Price"],
-                                        "Product Desc": doc["Product Desc"],
-                                      }).toList(),
-                                  // subTotal: "1000", // calculate from cart
-                                  // GSTAmount: "100", // calculate from cart
-                                  // totalPrice: "1100", // calculate from cart
-
-                                  subTotal: subTotal.toStringAsFixed(2),
-                                  GSTAmount: gstAmount.toStringAsFixed(2),
-                                  totalPrice: totalAmount.toStringAsFixed(2),
+                      child: Obx(
+                         () => PrimaryButton(
+                            title: 'Confirm & Proceed',
+                            bgColor: Colors.orange,
+                            isLoading: locationController.isCheckingLocation.value,
+                            ontTap: () async{
+                              await locationController.getCurrentLocation();
+                              //GPS
+                              if (locationController.isCheckingLocation.value) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            "Checking your location... Please wait")),
+                                  );
+                                  // return;
+                                }
+                        
+                                if (!locationController
+                                    .isServiceAvailable.value) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          "Service not available in your area. Coming soon!",style: TextStyle(
+                                            fontSize: 15
+                                          ),),
+                                          backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  // return;
+                                }
+                                if (locationController.isCheckingLocation.value ==
+                                        false &&
+                                    locationController.isServiceAvailable.value ==
+                                        true) {
+                                  calculateTotals();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => NewCartOrderAddressScreen(
+                                    userId: currentUserId,
+                                    cartItems: ItemList.map((doc) => {
+                                          "Product Name": doc["Product Name"],
+                                          "Product Image": doc["Product Image"],
+                                          "Product Quantity":
+                                              doc["Product Quantity"],
+                                          "Quantity": doc["quantity"],
+                                          "Product Price": doc["Product Price"],
+                                          "Product Desc": doc["Product Desc"],
+                                        }).toList(),
+                                    // subTotal: "1000", // calculate from cart
+                                    // GSTAmount: "100", // calculate from cart
+                                    // totalPrice: "1100", // calculate from cart
+                        
+                                    subTotal: subTotal.toStringAsFixed(2),
+                                    GSTAmount: gstAmount.toStringAsFixed(2),
+                                    totalPrice: totalAmount.toStringAsFixed(2),
+                                  ),
                                 ),
-                              ),
-                            );
-                          }),
+                              );
+                                }
+                              //GPS
+                              
+                            }),
+                      ),
                     ),
                   )
                 ],

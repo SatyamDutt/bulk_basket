@@ -11,7 +11,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -202,19 +201,21 @@ class _ProductScreenState extends State<ProductScreen> {
     await groomingItemsCategory();
 
     ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      backgroundColor: Colors.white,
-      
-      content: Text("Products refreshed", textAlign: TextAlign.center,style: TextStyle(color: Colors.green,fontWeight: FontWeight.w600),),
-      behavior: SnackBarBehavior.floating,
-      margin: EdgeInsets.only(bottom: 80, left: 100, right: 100),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+      SnackBar(
+        backgroundColor: Colors.white,
+        content: Text(
+          "Products refreshed",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(bottom: 80, left: 100, right: 100),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        duration: Duration(seconds: 2),
       ),
-      duration: Duration(seconds: 2),
-    ),
-  );
-
+    );
   }
 
   /// **Search Functionality Across All Categories**
@@ -310,13 +311,15 @@ class _ProductScreenState extends State<ProductScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Wlinkit',
+                  'Grovomart',
                   style: TextStyle(fontSize: 18),
                 ),
-                SizedBox(
-                    width: 300,
-                    child: Text(locationController.address.value,
-                        maxLines: 2, style: TextStyle(fontSize: 8)))
+                Obx(
+                  () => SizedBox(
+                      width: 300,
+                      child: Text(locationController.address.value,
+                          maxLines: 2, style: TextStyle(fontSize: 8))),
+                )
               ],
             ),
           ],

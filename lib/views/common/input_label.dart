@@ -18,9 +18,8 @@ class _InputLabelState extends State<InputLabel> {
       children: [
         Text(widget.title,
           style: TextStyle(
-            fontSize: 16.sp,
+            fontSize: 16,
           ),
-          
         ),
       ],
     );

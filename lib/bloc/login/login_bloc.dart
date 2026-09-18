@@ -19,6 +19,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 
+import '../../utils/firebase_error_mapper.dart';
+
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   LoginBloc() : super(LoginInitial()) {
     on<LoginButtonPressed>(_loginButtonPressed);
@@ -28,10 +30,10 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       LoginButtonPressed event, Emitter<LoginState> emit) async {
     emit(LoginLoading());
 
-    if (event.email.isEmpty || event.password.isEmpty) {
-      emit(LoginFailure('Email and Password are required'));
-      return;
-    }
+    // if (event.email.isEmpty || event.password.isEmpty) {
+    //   emit(LoginFailure('Email and Password are required'));
+    //   return;
+    // }
 
     try {
       UserCredential userCredential = await FirebaseAuth.instance
@@ -44,7 +46,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
       emit(LoginSuccess(userCredential.user!.uid));
     } on FirebaseAuthException catch (e) {
-      emit(LoginFailure("${e.message}" ?? "Login failed"));
+      // emit(LoginFailure("${e.message}" ?? "Login failed"));
+      emit(LoginFailure(FirebaseErrorMapper.getMessage(e.code)));
     }
   }
 }
